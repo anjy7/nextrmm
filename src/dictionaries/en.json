@@ -1,0 +1,70 @@
+{
+  "index": {},
+  "auth-layout": {
+    "document": "Document",
+    "click-continue": "By continuing, you agree to NextRMM's",
+    "term-service": "Terms of Service",
+    "and": "and",
+    "privacy-policy": "Privacy Policy"
+  },
+  "login": {
+    "welcome-back": "Welcom Back",
+    "enter-email": "Enter your email to sign in to your account",
+    "no-account": "Don't have an account? Sign Up",
+    "sign-in": "Sign In"
+  },
+  "register": {
+    "sign-in": "Have an account? Sign In Now",
+    "create-account": "Create a new account",
+    "enter-email": "Enter your email below to create your account"
+  },
+  "auth-form": {
+    "email": "Email",
+    "continue": "Or continue with",
+    "sign-in": "Sign In with Email",
+    "sign-up": "Sign Up with Email"
+  },
+  "sign-in-email-template": {
+    "welcome-back": "Welcome Back!",
+    "sign-in": "Sign in to"
+  },
+  "sign-up-email-template": {
+    "get-started": "Get Started!",
+    "sign-up": "Sign up to"
+  },
+  "dashboard": {
+    "menu": {
+      "getting-started": "Getting Started",
+      "organizations": "Organizations"
+    },
+    "community": {
+      "community": "Community",
+      "documentation": "Documentation",
+      "news": "News"
+    },
+    "create-organization": {
+      "title": "Create an Organization",
+      "name": "Organization Name",
+      "description": "Add a new organization",
+      "create": "Create",
+      "wait": "Creating...",
+      "successToast": "Organization created successfully",
+      "errorToast": "Oops, Error creating organization"
+    },
+    "create-location": {
+      "title": "Create Location",
+      "organization-name": "Organization Name",
+      "organization-select": "Select organization...",
+      "organization-input-placeholder": "Search organization...",
+      "organization-empty-placeholder": "No organization found.",
+      "organization-fetch-loading": "Loading...",
+      "organization-fetch-error": "Oops, there are something wrong with server.",
+      "location-name": "Location Name",
+      "description": "Add a new location",
+      "create": "Create",
+      "wait": "Creating...",
+      "successToast": "Location created successfully",
+      "errorToast": "Oops, Error creating location"
+    }
+  }
+}

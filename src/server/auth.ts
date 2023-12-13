@@ -26,12 +26,27 @@ const resend = new Resend("re_T3T2Nw76_LrnEcTmQxUC3oXfdAJ92WQmM");
  *
  * @see https://next-auth.js.org/getting-started/typescript#module-augmentation
  */
+
+interface Session {
+  id: string;
+  userId: string;
+  deviceId: string;
+  sessionId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  country: string;
+  deviceType: string;
+  city: string;
+  os: string;
+  browser: string;
+}
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string; // ...other properties
       // role: UserRole;
     } & DefaultSession["user"];
+    currentSession: Session;
   }
 
   // interface User {

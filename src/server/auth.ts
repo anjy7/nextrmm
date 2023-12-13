@@ -122,14 +122,12 @@ export function authOptions(
           country = ipapi_json["country_name"];
           city = ipapi_json["city"];
         }
-        userIp = userIp === undefined ? "" : userIp;
 
         const existingSession = await db.userSessions.findFirst({
           where: {
             userId: user.id,
             city: city,
             country: country,
-            ip: userIp,
             browser: browser,
             os: os,
             deviceType: deviceType,
@@ -148,7 +146,7 @@ export function authOptions(
               user: { connect: { id: user.id } },
               session: { connect: { id: session_model.id } },
               deviceId: id,
-              ip: userIp,
+              ip: userIp || "",
               os: os || "other",
               country: country,
               city: city,
@@ -158,10 +156,9 @@ export function authOptions(
           });
         }
 
-        const currentSession = await db.userSessions.findFirst({
+        let currentSession = await db.userSessions.findFirst({
           where: {
             userId: user.id,
-            ip: userIp,
             city: city,
             country: country,
             browser: browser,
@@ -170,6 +167,16 @@ export function authOptions(
           },
         });
 
+        const updateSession = await db.userSessions.update({
+          where: {
+            deviceId: currentSession?.deviceId,
+          },
+          data: {
+            lastActivity: new Date(),
+          },
+        });
+
+        currentSession = updateSession;
         return {
           ...session,
           user: {

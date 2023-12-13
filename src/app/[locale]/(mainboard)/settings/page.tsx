@@ -1,7 +1,5 @@
 import { headers } from "next/headers";
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ActiveUserSessions } from "~/components/active-user-sessions";
 import { getServerAuthSession } from "~/server/auth";
 import { ActiveDevices } from "../../../../components/active-devices";
 
@@ -38,13 +36,12 @@ export default async function Settings() {
     redirect("/login");
   }
 
-  console.log("?????", session?.currentSession);
   return (
     <div className="px-4">
       <div className="pt-4 text-xl font-medium">Settings</div>
       <div className="text-slate-500">Manage your security prefernces</div>
       <div className="py-3 text-lg font-normal">Active devices</div>
-      <ActiveDevices session={session?.currentSession} />
+      <ActiveDevices session={session.currentSession} />
     </div>
   );
 }

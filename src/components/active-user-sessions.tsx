@@ -24,6 +24,10 @@ interface ActiveUserSessionsProps {
   handleSignOut: (sessionId: string) => Promise<void>;
 }
 
+const formatDate = (date: Date) => {
+  return date.toLocaleString(); // You can adjust this to your desired date format
+};
+
 export function ActiveUserSessions({
   session,
   currentSession,
@@ -68,11 +72,16 @@ export function ActiveUserSessions({
         <div>
           <div className="font-medium">{session.os}</div>
           <div className="text-slate-500">{session.browser}</div>
-          <div className="text-slate-500">IP</div>
+          <div className="text-slate-500">{session.ip}</div>
           <div className="text-slate-500">
             {session.city},{session.country}
           </div>
-          <div className="text-slate-500">Last activity: </div>
+          <div className="text-slate-500">
+            First Sign In: {formatDate(session.createdAt)}
+          </div>
+          <div className="text-slate-500">
+            Last activity: {formatDate(session.lastActivity)}
+          </div>
         </div>
       </div>
       {currentSession.deviceId == session.deviceId ? (

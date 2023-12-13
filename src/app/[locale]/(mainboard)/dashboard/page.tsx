@@ -12,22 +12,25 @@ type Props = {
   params: { locale: Locale };
 };
 
-function extractIp(url: RequestInfo | URL) {
-  return fetch(url).then((res) => res.text());
+async function getIp(url: RequestInfo | URL) {
+  const response = await fetch(url);
+  return response.text();
 }
 
 export default async function DashBoard({ params: { locale } }: Props) {
   const headersList = headers();
   const userAgent = headersList.get("user-agent");
   let userIp;
-
-  extractIp("https://www.cloudflare.com/cdn-cgi/trace").then((data) => {
+  try {
+    const data = await getIp("https://www.cloudflare.com/cdn-cgi/trace");
     const ipAddressRegex = /ip=([a-fA-F\d.:]+)/;
     const match = data.match(ipAddressRegex);
     if (match) {
       userIp = match[1];
     }
-  });
+  } catch (error) {
+    console.error("Error fetching IP:", error);
+  }
 
   let deviceType = Boolean(
     userAgent?.match(

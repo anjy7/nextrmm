@@ -138,7 +138,6 @@ export function authOptions(
               browser: browser || "other",
             },
           });
-          console.log("@@@@@@@@@@@", updatedSessionModel);
         }
 
         const currentSession = await db.userSessions.findFirst({

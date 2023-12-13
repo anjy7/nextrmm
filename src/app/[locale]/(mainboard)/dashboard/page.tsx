@@ -12,15 +12,6 @@ type Props = {
   params: { locale: Locale };
 };
 
-function DetectDevice() {
-  let isMobile = window.matchMedia;
-  if (isMobile) {
-    let match_mobile = isMobile("(pointer:coarse)");
-    return match_mobile.matches;
-  }
-  return false;
-}
-
 function extractIp(url: RequestInfo | URL) {
   return fetch(url).then((res) => res.text());
 }
@@ -38,7 +29,13 @@ export default async function DashBoard({ params: { locale } }: Props) {
     }
   });
 
-  let deviceType = DetectDevice() ? "Mobile" : "Desktop";
+  let deviceType = Boolean(
+    userAgent?.match(
+      /Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i,
+    ),
+  )
+    ? "Mobile"
+    : "Desktop";
 
   const session = await getServerAuthSession(
     userAgent ?? "",

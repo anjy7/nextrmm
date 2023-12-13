@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import Link from "next/link";
 import { Icons } from "~/components/icons";
 import type { Locale } from "~/i18n-config";
@@ -11,8 +12,40 @@ type Props = {
   params: { locale: Locale };
 };
 
+function DetectDevice() {
+  let isMobile = window.matchMedia;
+  if (isMobile) {
+    let match_mobile = isMobile("(pointer:coarse)");
+    return match_mobile.matches;
+  }
+  return false;
+}
+
+function extractIp(url: RequestInfo | URL) {
+  return fetch(url).then((res) => res.text());
+}
+
 export default async function DashBoard({ params: { locale } }: Props) {
-  const session = await getServerAuthSession();
+  const headersList = headers();
+  const userAgent = headersList.get("user-agent");
+  let userIp;
+
+  extractIp("https://www.cloudflare.com/cdn-cgi/trace").then((data) => {
+    const ipAddressRegex = /ip=([a-fA-F\d.:]+)/;
+    const match = data.match(ipAddressRegex);
+    if (match) {
+      userIp = match[1];
+    }
+  });
+
+  let deviceType = DetectDevice() ? "Mobile" : "Desktop";
+
+  const session = await getServerAuthSession(
+    userAgent ?? "",
+    userIp ?? "",
+    deviceType ?? "",
+  );
+  console.log("++++++Session", session);
   const d = await getDictionary(locale);
 
   return (

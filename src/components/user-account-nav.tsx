@@ -4,6 +4,14 @@ import Link from "next/link";
 import { User } from "next-auth";
 import { signOut } from "next-auth/react";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -11,12 +19,19 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { UserAvatar } from "~/components/user-avatar";
+import { getServerAuthSession } from "~/server/auth";
+import { api } from "~/trpc/react";
 
 interface UserAccountNavProps extends React.HTMLAttributes<HTMLDivElement> {
-  user: Pick<User, "name" | "image" | "email">;
+  user: Pick<User, "name" | "image" | "email" | "id">;
 }
 
 export function UserAccountNav({ user }: UserAccountNavProps) {
+  const sessions = api.session.getByUser.useQuery({
+    userId: user.id,
+  });
+  console.log("}}}}}}}}]", sessions.data);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
@@ -42,6 +57,22 @@ export function UserAccountNav({ user }: UserAccountNavProps) {
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/settings">Settings</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Dialog>
+            <DialogTrigger className="ml-2 text-sm">
+              Manage Account
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Security</DialogTitle>
+                <DialogDescription>
+                  Manage your security preferences.
+                </DialogDescription>
+                {sessions?.data?.map((x) => <div key={x.id}>{x.browser}</div>)}
+              </DialogHeader>
+            </DialogContent>
+          </Dialog>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

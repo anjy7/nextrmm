@@ -27,13 +27,14 @@ const resend = new Resend("re_T3T2Nw76_LrnEcTmQxUC3oXfdAJ92WQmM");
  * @see https://next-auth.js.org/getting-started/typescript#module-augmentation
  */
 
-interface Session {
+interface SessionInterface {
   id: string;
   userId: string;
   deviceId: string;
   sessionId: string;
   createdAt: Date;
-  updatedAt: Date;
+  lastActivity: Date;
+  ip: string;
   country: string;
   deviceType: string;
   city: string;
@@ -46,7 +47,7 @@ declare module "next-auth" {
       id: string; // ...other properties
       // role: UserRole;
     } & DefaultSession["user"];
-    currentSession: Session;
+    currentSession: SessionInterface;
   }
 
   // interface User {
@@ -128,6 +129,7 @@ export function authOptions(
             userId: user.id,
             city: city,
             country: country,
+            ip: userIp,
             browser: browser,
             os: os,
             deviceType: deviceType,
@@ -142,10 +144,11 @@ export function authOptions(
           let updatedSessionModel = await db.userSessions.create({
             data: {
               createdAt: new Date(),
-              updatedAt: new Date(),
+              lastActivity: new Date(),
               user: { connect: { id: user.id } },
               session: { connect: { id: session_model.id } },
               deviceId: id,
+              ip: userIp,
               os: os || "other",
               country: country,
               city: city,
@@ -158,6 +161,7 @@ export function authOptions(
         const currentSession = await db.userSessions.findFirst({
           where: {
             userId: user.id,
+            ip: userIp,
             city: city,
             country: country,
             browser: browser,

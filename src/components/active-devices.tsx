@@ -10,7 +10,8 @@ interface Session {
   deviceId: string;
   sessionId: string;
   createdAt: Date;
-  updatedAt: Date;
+  lastActivity: Date;
+  ip: string;
   country: string;
   deviceType: string;
   city: string;

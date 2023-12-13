@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { Button } from "~/components/ui/button";
-import { api } from "~/trpc/react";
 
 interface Session {
   id: string;
@@ -10,7 +9,8 @@ interface Session {
   deviceId: string;
   sessionId: string;
   createdAt: Date;
-  updatedAt: Date;
+  lastActivity: Date;
+  ip: string;
   country: string;
   deviceType: string;
   city: string;

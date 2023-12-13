@@ -56,19 +56,20 @@ model User {
 }
 
 model UserSessions {
-  id         String   @id @default(uuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deviceId   String   @unique
-  sessionId  String
-  session    Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  country    String
-  deviceType String
-  city       String
-  os         String
-  browser    String
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceId     String   @unique
+  sessionId    String
+  session      Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  lastActivity DateTime
+  ip           String
+  country      String
+  deviceType   String
+  city         String
+  os           String
+  browser      String
 }
 
 model VerificationToken {

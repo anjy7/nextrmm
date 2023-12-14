@@ -1,37 +1,9 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getServerAuthSession } from "~/server/auth";
 import { ActiveDevices } from "../../../../components/active-devices";
 
-function extractIp(url: RequestInfo | URL) {
-  return fetch(url).then((res) => res.text());
-}
 export default async function Settings() {
-  const headersList = headers();
-  const userAgent = headersList.get("user-agent");
-  let userIp;
-
-  extractIp("https://www.cloudflare.com/cdn-cgi/trace").then((data) => {
-    const ipAddressRegex = /ip=([a-fA-F\d.:]+)/;
-    const match = data.match(ipAddressRegex);
-    if (match) {
-      userIp = match[1];
-    }
-  });
-
-  let deviceType = Boolean(
-    userAgent?.match(
-      /Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i,
-    ),
-  )
-    ? "Mobile"
-    : "Desktop";
-
-  const session = await getServerAuthSession(
-    userAgent ?? "",
-    userIp ?? "",
-    deviceType ?? "",
-  );
+  const session = await getServerAuthSession();
   if (!session) {
     redirect("/login");
   }

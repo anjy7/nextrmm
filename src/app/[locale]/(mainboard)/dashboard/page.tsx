@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import Link from "next/link";
 import { Icons } from "~/components/icons";
 import type { Locale } from "~/i18n-config";
@@ -12,39 +11,8 @@ type Props = {
   params: { locale: Locale };
 };
 
-async function getIp(url: RequestInfo | URL) {
-  const response = await fetch(url);
-  return response.text();
-}
-
 export default async function DashBoard({ params: { locale } }: Props) {
-  const headersList = headers();
-  const userAgent = headersList.get("user-agent");
-  let userIp;
-  try {
-    const data = await getIp("https://www.cloudflare.com/cdn-cgi/trace");
-    const ipAddressRegex = /ip=([a-fA-F\d.:]+)/;
-    const match = data.match(ipAddressRegex);
-    if (match) {
-      userIp = match[1];
-    }
-  } catch (error) {
-    console.error("Error fetching IP:", error);
-  }
-
-  let deviceType = Boolean(
-    userAgent?.match(
-      /Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i,
-    ),
-  )
-    ? "Mobile"
-    : "Desktop";
-
-  const session = await getServerAuthSession(
-    userAgent ?? "",
-    userIp ?? "",
-    deviceType ?? "",
-  );
+  const session = await getServerAuthSession();
   console.log("++++++Session", session);
   const d = await getDictionary(locale);
 

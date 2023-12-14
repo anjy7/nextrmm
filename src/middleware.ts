@@ -36,6 +36,12 @@ export function middleware(request: NextRequest) {
   )
     return;
 
+  const { nextUrl: url, geo } = request;
+  const country = geo?.country || "US";
+  const city = geo?.city || "San Francisco";
+  const region = geo?.region || "CA";
+  console.log("+++++++++++++++++++++++", city, country);
+
   // Check if there is any supported locale in the pathname
   const pathnameIsMissingLocale = i18n.locales.every(
     (locale) =>

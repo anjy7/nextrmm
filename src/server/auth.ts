@@ -1,3 +1,5 @@
+import { headers } from "next/headers";
+import type { NextRequest } from "next/server";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { customAlphabet } from "nanoid";
 import {
@@ -56,236 +58,242 @@ declare module "next-auth" {
   // }
 }
 
-export function authOptions(
-  userAgent?: string,
-  userIp?: string,
-  deviceType?: string,
-): NextAuthOptions {
-  return {
-    callbacks: {
-      async session({ session, user }: { session: any; user: any }) {
-        if (session.expires === undefined || userAgent === undefined) {
-          return {
-            ...session,
-            user: {
-              ...session.user,
-              id: user.id,
-            },
-          };
-        }
+export const authOptions: NextAuthOptions = {
+  callbacks: {
+    async session({ session, user }: { session: any; user: any }) {
+      // if (session.expires === undefined || userAgent === undefined) {
+      //   return {
+      //     ...session,
+      //     user: {
+      //       ...session.user,
+      //       id: user.id,
+      //     },
+      //   };
+      // }
 
-        var uap = new UAParser(userAgent);
-        let os = uap.getResult().os.name;
-        let browser = uap.getResult().browser.name;
+      const userAgent = headers().get("user-agent");
+      const userIp = headers().get("x-forwarded-for");
 
-        // browser = (function () {
-        //   var test = function (regexp: RegExp) {
-        //     return regexp.test(user_agent);
-        //   };
-        //   switch (true) {
-        //     case test(/edg/i):
-        //       return "Microsoft Edge";
-        //     case test(/trident/i):
-        //       return "Microsoft Internet Explorer";
-        //     case test(/firefox|fxios/i):
-        //       return "Mozilla Firefox";
-        //     case test(/opr\//i):
-        //       return "Opera";
-        //     case test(/ucbrowser/i):
-        //       return "UC Browser";
-        //     case test(/samsungbrowser/i):
-        //       return "Samsung Browser";
-        //     case test(/chrome|chromium|crios/i):
-        //       return "Google Chrome";
-        //     case test(/safari/i):
-        //       return "Apple Safari";
-        //     default:
-        //       return "Other";
-        //   }
-        // })();
+      let deviceType = Boolean(
+        userAgent?.match(
+          /Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i,
+        ),
+      )
+        ? "Mobile"
+        : "Desktop";
 
-        let token_expires = session.expires;
-        let session_model = await db.session.findFirst({
-          where: {
-            user: {
-              id: user.id,
-            },
-            expires: token_expires,
-          },
-        });
+      let uap;
+      let os;
+      let browser;
+      if (userAgent) {
+        uap = new UAParser(userAgent);
+        os = uap.getResult().os.name;
+        browser = uap.getResult().browser.name;
+      }
 
-        const ipapi_res = await fetch(`http://ipapi.co/${userIp}/json/`);
-        const ipapi_json = await ipapi_res.json();
-        let country = "other";
-        let city = "other";
-        if (ipapi_json["error"] === undefined) {
-          country = ipapi_json["country_name"];
-          city = ipapi_json["city"];
-        }
+      // browser = (function () {
+      //   var test = function (regexp: RegExp) {
+      //     return regexp.test(user_agent);
+      //   };
+      //   switch (true) {
+      //     case test(/edg/i):
+      //       return "Microsoft Edge";
+      //     case test(/trident/i):
+      //       return "Microsoft Internet Explorer";
+      //     case test(/firefox|fxios/i):
+      //       return "Mozilla Firefox";
+      //     case test(/opr\//i):
+      //       return "Opera";
+      //     case test(/ucbrowser/i):
+      //       return "UC Browser";
+      //     case test(/samsungbrowser/i):
+      //       return "Samsung Browser";
+      //     case test(/chrome|chromium|crios/i):
+      //       return "Google Chrome";
+      //     case test(/safari/i):
+      //       return "Apple Safari";
+      //     default:
+      //       return "Other";
+      //   }
+      // })();
 
-        const existingSession = await db.userSessions.findFirst({
-          where: {
-            userId: user.id,
-            city: city,
-            country: country,
-            browser: browser,
-            os: os,
-            deviceType: deviceType,
-          },
-        });
-
-        if (session_model && !existingSession) {
-          const id = customAlphabet(
-            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-            10,
-          )();
-          let updatedSessionModel = await db.userSessions.create({
-            data: {
-              createdAt: new Date(),
-              lastActivity: new Date(),
-              user: { connect: { id: user.id } },
-              session: { connect: { id: session_model.id } },
-              deviceId: id,
-              ip: userIp || "",
-              os: os || "other",
-              country: country,
-              city: city,
-              deviceType: deviceType || "other",
-              browser: browser || "other",
-            },
-          });
-        }
-
-        let currentSession = await db.userSessions.findFirst({
-          where: {
-            userId: user.id,
-            city: city,
-            country: country,
-            browser: browser,
-            deviceType: deviceType,
-            os: os,
-          },
-        });
-
-        const updateSession = await db.userSessions.update({
-          where: {
-            deviceId: currentSession?.deviceId,
-          },
-          data: {
-            lastActivity: new Date(),
-          },
-        });
-
-        currentSession = updateSession;
-        return {
-          ...session,
+      let token_expires = session.expires;
+      let session_model = await db.session.findFirst({
+        where: {
           user: {
-            ...session.user,
             id: user.id,
           },
-          currentSession,
-        };
-      },
-    },
-    pages: {
-      signIn: "/login",
-    },
-    adapter: PrismaAdapter(db),
-    providers: [
-      // DiscordProvider({
-      //   clientId: env.DISCORD_CLIENT_ID,
-      //   clientSecret: env.DISCORD_CLIENT_SECRET,
-      // }),
-      EmailProvider({
-        server: {
-          host: env.EMAIL_SERVER_HOST,
-          port: env.EMAIL_SERVER_PORT,
-          auth: {
-            user: env.EMAIL_SERVER_USER,
-            pass: env.EMAIL_SERVER_PASSWORD,
+          expires: token_expires,
+        },
+      });
+
+      const ipapi_res = await fetch(`http://ipapi.co/${userIp}/json/`);
+      const ipapi_json = await ipapi_res.json();
+      let country = "other";
+      let city = "other";
+      if (ipapi_json["error"] === undefined) {
+        country = ipapi_json["country_name"];
+        city = ipapi_json["city"];
+      }
+
+      const existingSession = await db.userSessions.findFirst({
+        where: {
+          userId: user.id,
+          city: city,
+          country: country,
+          browser: browser,
+          os: os,
+          deviceType: deviceType,
+        },
+      });
+
+      if (session_model && !existingSession) {
+        const id = customAlphabet(
+          "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+          10,
+        )();
+        let updatedSessionModel = await db.userSessions.create({
+          data: {
+            createdAt: new Date(),
+            lastActivity: new Date(),
+            user: { connect: { id: user.id } },
+            session: { connect: { id: session_model.id } },
+            deviceId: id,
+            ip: userIp || "",
+            os: os || "other",
+            country: country,
+            city: city,
+            deviceType: deviceType || "other",
+            browser: browser || "other",
           },
+        });
+      }
+
+      let currentSession = await db.userSessions.findFirst({
+        where: {
+          userId: user.id,
+          city: city,
+          country: country,
+          browser: browser,
+          deviceType: deviceType,
+          os: os,
         },
-        from: env.EMAIL_FROM,
-        sendVerificationRequest: async ({ identifier, url, provider }) => {
-          try {
-            const { host } = new URL(url);
-            const splits = identifier.split("+");
-            const email = splits[0];
-            const locale = splits[1] ?? "en";
+      });
 
-            // Email provider lowercase all the letters so we need to transform it back for locales like "es-ES"
-            const transformedLocale = locale
-              .split("-")
-              .map((part, index) => (index > 0 ? part.toUpperCase() : part))
-              .join("-");
+      const updateSession = await db.userSessions.update({
+        where: {
+          deviceId: currentSession?.deviceId,
+        },
+        data: {
+          lastActivity: new Date(),
+        },
+      });
 
-            const isEmailValid = authDataSchema.safeParse({ email });
+      currentSession = updateSession;
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: user.id,
+        },
+        currentSession,
+      };
+    },
+  },
+  pages: {
+    signIn: "/login",
+  },
+  adapter: PrismaAdapter(db),
+  providers: [
+    // DiscordProvider({
+    //   clientId: env.DISCORD_CLIENT_ID,
+    //   clientSecret: env.DISCORD_CLIENT_SECRET,
+    // }),
+    EmailProvider({
+      server: {
+        host: env.EMAIL_SERVER_HOST,
+        port: env.EMAIL_SERVER_PORT,
+        auth: {
+          user: env.EMAIL_SERVER_USER,
+          pass: env.EMAIL_SERVER_PASSWORD,
+        },
+      },
+      from: env.EMAIL_FROM,
+      sendVerificationRequest: async ({ identifier, url, provider }) => {
+        try {
+          const { host } = new URL(url);
+          const splits = identifier.split("+");
+          const email = splits[0];
+          const locale = splits[1] ?? "en";
 
-            if (!isEmailValid.success) {
-              throw new Error("Invalid Email.");
-            }
+          // Email provider lowercase all the letters so we need to transform it back for locales like "es-ES"
+          const transformedLocale = locale
+            .split("-")
+            .map((part, index) => (index > 0 ? part.toUpperCase() : part))
+            .join("-");
 
-            const user = await db.user.findUnique({
-              where: {
-                email: isEmailValid.data.email,
-              },
-              select: {
-                emailVerified: true,
-              },
-            });
+          const isEmailValid = authDataSchema.safeParse({ email });
 
-            const dictionary = await getDictionary(transformedLocale as Locale);
-            const signInDictionary = dictionary["sign-in-email-template"];
-            const signUpDictionary = dictionary["sign-up-email-template"];
-
-            console.log("login_url\n", url);
-            let email_send_response = await resend.emails.send({
-              from: provider.from,
-              to: isEmailValid.data.email,
-              subject: `Sign in to ${host}.`,
-              text: `Sign in to ${host}\n${url}\n\n`,
-              react: user
-                ? SignInTemplate({ host, url, d: signInDictionary })
-                : SignUpTemplate({
-                    host,
-                    url,
-                    d: signUpDictionary,
-                  }),
-            });
-          } catch (error) {
-            throw new Error(`Email could not be sent.`);
+          if (!isEmailValid.success) {
+            throw new Error("Invalid Email.");
           }
-        },
-      }),
-      GitHubProvider({
-        clientId: env.GITHUB_CLIENT_ID,
-        clientSecret: env.GITHUB_CLIENT_SECRET,
-        allowDangerousEmailAccountLinking: true,
-      }),
-      GoogleProvider({
-        clientId: env.GOOGLE_CLIENT_ID,
-        clientSecret: env.GOOGLE_CLIENT_SECRET,
-        allowDangerousEmailAccountLinking: true,
-      }) /**
-       * ...add more providers here.
-       *
-       * Most other providers require a bit more work than the Discord provider. For example, the
-       * GitHub provider requires you to add the `refresh_token_expires_in` field to the Account
-       * model. Refer to the NextAuth.js docs for the provider you want to use. Example:
-       *
-       * @see https://next-auth.js.org/providers/github
-       */,
-    ],
-  };
-}
+
+          const user = await db.user.findUnique({
+            where: {
+              email: isEmailValid.data.email,
+            },
+            select: {
+              emailVerified: true,
+            },
+          });
+
+          const dictionary = await getDictionary(transformedLocale as Locale);
+          const signInDictionary = dictionary["sign-in-email-template"];
+          const signUpDictionary = dictionary["sign-up-email-template"];
+
+          console.log("login_url\n", url);
+          let email_send_response = await resend.emails.send({
+            from: provider.from,
+            to: isEmailValid.data.email,
+            subject: `Sign in to ${host}.`,
+            text: `Sign in to ${host}\n${url}\n\n`,
+            react: user
+              ? SignInTemplate({ host, url, d: signInDictionary })
+              : SignUpTemplate({
+                  host,
+                  url,
+                  d: signUpDictionary,
+                }),
+          });
+        } catch (error) {
+          throw new Error(`Email could not be sent.`);
+        }
+      },
+    }),
+    GitHubProvider({
+      clientId: env.GITHUB_CLIENT_ID,
+      clientSecret: env.GITHUB_CLIENT_SECRET,
+      allowDangerousEmailAccountLinking: true,
+    }),
+    GoogleProvider({
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+      allowDangerousEmailAccountLinking: true,
+    }) /**
+     * ...add more providers here.
+     *
+     * Most other providers require a bit more work than the Discord provider. For example, the
+     * GitHub provider requires you to add the `refresh_token_expires_in` field to the Account
+     * model. Refer to the NextAuth.js docs for the provider you want to use. Example:
+     *
+     * @see https://next-auth.js.org/providers/github
+     */,
+  ],
+};
 
 /**
  * Wrapper for `getServerSession` so that you don't need to import the `authOptions` in every file.
  *
  * @see https://next-auth.js.org/configuration/nextjs
  */
-export const getServerAuthSession = (
-  userAgent?: string,
-  userIp?: string,
-  deviceType?: string,
-) => getServerSession(authOptions(userAgent, userIp, deviceType));
+export const getServerAuthSession = () => getServerSession(authOptions);

@@ -4,14 +4,6 @@ import Link from "next/link";
 import { User } from "next-auth";
 import { signOut } from "next-auth/react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -19,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { UserAvatar } from "~/components/user-avatar";
-import { ActiveUserSessions } from "./active-user-sessions";
 
 interface UserAccountNavProps extends React.HTMLAttributes<HTMLDivElement> {
   user: Pick<User, "name" | "image" | "email" | "id">;

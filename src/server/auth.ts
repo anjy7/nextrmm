@@ -10,6 +10,7 @@ import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import { Resend } from "resend";
 import { UAParser } from "ua-parser-js";
+import { NewLocationTemplate } from "~/components/email-template/new-location-sign-in";
 import { SignInTemplate } from "~/components/email-template/sign-in";
 import { SignUpTemplate } from "~/components/email-template/sign-up";
 import { env } from "~/env.mjs";
@@ -96,6 +97,49 @@ export const authOptions: NextAuthOptions = {
         existingSession?.deviceType == "" ||
         existingSession?.ip == ""
       ) {
+        if (userIp) {
+          //checks if user with same Ip address has a session already
+          let userSessionUsingIp = await db.session.findMany({
+            where: {
+              ip: userIp,
+              userId: user.id,
+            },
+          });
+          //if the IP is new i.e no match found for the user session with same IP, send email
+          if (userSessionUsingIp.length == 0) {
+            try {
+              const user = await db.user.findUnique({
+                where: {
+                  email: session.user.email,
+                },
+                select: {
+                  emailVerified: true,
+                },
+              });
+
+              let email_send_response = await resend.emails.send({
+                from: env.EMAIL_FROM,
+                to: session.user.email,
+                subject:
+                  "Alert: Login from New Location Detected into your NextRMM account.",
+                text: `Access from a New Location Detected with IP: ${userIp}\n\n`,
+                react: NewLocationTemplate({
+                  username: session.user.name,
+                  account: session.user.email,
+                  time: new Date().toLocaleString(),
+                  ip: userIp,
+                  city: city,
+                  country: country,
+                  os: os || "other",
+                  browser: browser || "other",
+                }),
+              });
+            } catch (error) {
+              throw new Error(`Email could not be sent.`);
+            }
+          }
+        }
+
         updateSession = await db.session.update({
           where: {
             id: existingSession?.id,
@@ -122,6 +166,7 @@ export const authOptions: NextAuthOptions = {
       }
 
       let currentSession = updateSession;
+
       return {
         ...session,
         user: {

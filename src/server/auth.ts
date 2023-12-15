@@ -1,7 +1,5 @@
-import { headers } from "next/headers";
-import type { NextRequest } from "next/server";
+import { cookies, headers } from "next/headers";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { customAlphabet } from "nanoid";
 import {
   getServerSession,
   type DefaultSession,
@@ -32,8 +30,7 @@ const resend = new Resend("re_T3T2Nw76_LrnEcTmQxUC3oXfdAJ92WQmM");
 interface SessionInterface {
   id: string;
   userId: string;
-  deviceId: string;
-  sessionId: string;
+  sessionToken: string;
   createdAt: Date;
   lastActivity: Date;
   ip: string;
@@ -61,16 +58,6 @@ declare module "next-auth" {
 export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ session, user }: { session: any; user: any }) {
-      // if (session.expires === undefined || userAgent === undefined) {
-      //   return {
-      //     ...session,
-      //     user: {
-      //       ...session.user,
-      //       id: user.id,
-      //     },
-      //   };
-      // }
-
       const userAgent = headers().get("user-agent");
       const userIp = headers().get("x-forwarded-for");
 
@@ -91,105 +78,50 @@ export const authOptions: NextAuthOptions = {
         browser = uap.getResult().browser.name;
       }
 
-      // browser = (function () {
-      //   var test = function (regexp: RegExp) {
-      //     return regexp.test(user_agent);
-      //   };
-      //   switch (true) {
-      //     case test(/edg/i):
-      //       return "Microsoft Edge";
-      //     case test(/trident/i):
-      //       return "Microsoft Internet Explorer";
-      //     case test(/firefox|fxios/i):
-      //       return "Mozilla Firefox";
-      //     case test(/opr\//i):
-      //       return "Opera";
-      //     case test(/ucbrowser/i):
-      //       return "UC Browser";
-      //     case test(/samsungbrowser/i):
-      //       return "Samsung Browser";
-      //     case test(/chrome|chromium|crios/i):
-      //       return "Google Chrome";
-      //     case test(/safari/i):
-      //       return "Apple Safari";
-      //     default:
-      //       return "Other";
-      //   }
-      // })();
+      let city = headers().get("city") || "other";
+      let country = headers().get("country") || "other";
 
-      let token_expires = session.expires;
-      let session_model = await db.session.findFirst({
+      const existingSession = await db.session.findFirst({
         where: {
-          user: {
-            id: user.id,
+          sessionToken: cookies().get("next-auth.session-token")?.value,
+        },
+      });
+
+      let updateSession;
+      if (
+        existingSession?.city == "" ||
+        existingSession?.country == "" ||
+        existingSession?.os == "" ||
+        existingSession?.browser == "" ||
+        existingSession?.deviceType == "" ||
+        existingSession?.ip == ""
+      ) {
+        updateSession = await db.session.update({
+          where: {
+            id: existingSession?.id,
           },
-          expires: token_expires,
-        },
-      });
-
-      const ipapi_res = await fetch(`http://ipapi.co/${userIp}/json/`);
-      const ipapi_json = await ipapi_res.json();
-      let country = "other";
-      let city = "other";
-      if (ipapi_json["error"] === undefined) {
-        country = ipapi_json["country_name"];
-        city = ipapi_json["city"];
-      }
-
-      const existingSession = await db.userSessions.findFirst({
-        where: {
-          userId: user.id,
-          city: city,
-          country: country,
-          browser: browser,
-          os: os,
-          deviceType: deviceType,
-        },
-      });
-
-      if (session_model && !existingSession) {
-        const id = customAlphabet(
-          "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-          10,
-        )();
-        let updatedSessionModel = await db.userSessions.create({
           data: {
-            createdAt: new Date(),
-            lastActivity: new Date(),
-            user: { connect: { id: user.id } },
-            session: { connect: { id: session_model.id } },
-            deviceId: id,
             ip: userIp || "",
             os: os || "other",
             country: country,
             city: city,
             deviceType: deviceType || "other",
             browser: browser || "other",
+            lastActivity: new Date(),
+          },
+        });
+      } else {
+        updateSession = await db.session.update({
+          where: {
+            id: existingSession?.id,
+          },
+          data: {
+            lastActivity: new Date(),
           },
         });
       }
 
-      let currentSession = await db.userSessions.findFirst({
-        where: {
-          userId: user.id,
-          city: city,
-          country: country,
-          browser: browser,
-          deviceType: deviceType,
-          os: os,
-        },
-      });
-
-      const updateSession = await db.userSessions.update({
-        where: {
-          deviceId: currentSession?.deviceId,
-        },
-        data: {
-          lastActivity: new Date(),
-        },
-      });
-
-      currentSession = updateSession;
+      let currentSession = updateSession;
       return {
         ...session,
         user: {

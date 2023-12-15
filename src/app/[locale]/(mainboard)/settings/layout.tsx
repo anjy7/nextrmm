@@ -6,7 +6,7 @@ type Props = {
   params: { locale: Locale };
 };
 
-export default async function DashBoardLayout({
+export default async function SettingsLayout({
   children,
   params: { locale },
 }: Props) {

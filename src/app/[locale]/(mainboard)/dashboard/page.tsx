@@ -13,7 +13,6 @@ type Props = {
 
 export default async function DashBoard({ params: { locale } }: Props) {
   const session = await getServerAuthSession();
-  console.log("++++++Session", session);
   const d = await getDictionary(locale);
 
   return (

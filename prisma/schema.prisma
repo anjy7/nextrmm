@@ -34,12 +34,19 @@ model Account {
 }
 
 model Session {
-  id           String         @id @default(cuid())
-  sessionToken String         @unique
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
   userId       String
   expires      DateTime
-  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  UserSessions UserSessions[]
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  lastActivity DateTime @default(now())
+  ip           String   @default("")
+  country      String   @default("")
+  deviceType   String   @default("")
+  city         String   @default("")
+  os           String   @default("")
+  browser      String   @default("")
 }
 
 model User {
@@ -52,24 +59,6 @@ model User {
   accounts      Account[]
   sessions      Session[]
   organizations Organization[]
-  UserSessions  UserSessions[]
-}
-
-model UserSessions {
-  id           String   @id @default(uuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deviceId     String   @unique
-  sessionId    String
-  session      Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  createdAt    DateTime @default(now())
-  lastActivity DateTime
-  ip           String
-  country      String
-  deviceType   String
-  city         String
-  os           String
-  browser      String
 }
 
 model VerificationToken {

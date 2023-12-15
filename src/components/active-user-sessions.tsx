@@ -6,8 +6,7 @@ import { Button } from "~/components/ui/button";
 interface Session {
   id: string;
   userId: string;
-  deviceId: string;
-  sessionId: string;
+  sessionToken: string;
   createdAt: Date;
   lastActivity: Date;
   ip: string;
@@ -33,6 +32,8 @@ export function ActiveUserSessions({
   currentSession,
   handleSignOut,
 }: ActiveUserSessionsProps) {
+  console.log("111111111111", currentSession);
+  console.log("2222222222222", session);
   return (
     <div className="mt-2  flex items-center justify-between gap-16 rounded-lg border border-primary p-2">
       <div className="mt-2  flex items-center gap-16 p-2">
@@ -84,7 +85,7 @@ export function ActiveUserSessions({
           </div>
         </div>
       </div>
-      {currentSession.deviceId == session.deviceId ? (
+      {currentSession.sessionToken == session.sessionToken ? (
         <div className="mr-6 rounded-md bg-primary p-2 font-medium text-white">
           Current Session
         </div>
@@ -92,7 +93,7 @@ export function ActiveUserSessions({
         <Button
           variant="destructive"
           className="mr-6"
-          onClick={() => handleSignOut(session.sessionId)}
+          onClick={() => handleSignOut(session.sessionToken)}
         >
           Sign out
         </Button>

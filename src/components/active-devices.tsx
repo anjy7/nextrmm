@@ -7,8 +7,7 @@ import { api } from "~/trpc/react";
 interface Session {
   id: string;
   userId: string;
-  deviceId: string;
-  sessionId: string;
+  sessionToken: string;
   createdAt: Date;
   lastActivity: Date;
   ip: string;
@@ -28,11 +27,11 @@ export function ActiveDevices({ session }: ActiveUserSessionsProps) {
     userId: session.userId,
   });
 
-  const deleteUserMutation = api.session.deleteBySessionId.useMutation();
-  const handleSignOut = async (sessionId: string) => {
+  const deleteUserMutation = api.session.deleteBySessionToken.useMutation();
+  const handleSignOut = async (sessionToken: string) => {
     try {
       await deleteUserMutation.mutateAsync({
-        sessionId,
+        sessionToken,
       });
       allSessions.refetch();
     } catch (error) {

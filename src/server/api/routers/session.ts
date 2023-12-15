@@ -9,15 +9,15 @@ export const sessionRouter = createTRPCRouter({
   getByUser: protectedProcedure
     .input(z.object({ userId: z.string() }))
     .query(async ({ ctx, input }) => {
-      return await ctx.db.userSessions.findMany({
+      return await ctx.db.session.findMany({
         where: input,
       });
     }),
-  deleteBySessionId: protectedProcedure
-    .input(z.object({ sessionId: z.string() }))
+  deleteBySessionToken: protectedProcedure
+    .input(z.object({ sessionToken: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.db.session.delete({
-        where: { id: input.sessionId },
+        where: { sessionToken: input.sessionToken },
       });
     }),
 });

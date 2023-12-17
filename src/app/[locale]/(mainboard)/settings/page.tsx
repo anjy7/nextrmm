@@ -13,7 +13,7 @@ export default async function Settings() {
       <div className="pt-4 text-xl font-medium">Settings</div>
       <div className="text-slate-500">Manage your security prefernces</div>
       <div className="py-3 text-lg font-normal">Active devices</div>
-      <ActiveDevices session={session.currentSession} />
+      <ActiveDevices currentSession={session.currentSession} />
     </div>
   );
 }

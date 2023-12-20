@@ -1,26 +1,13 @@
 "use client";
 
+import { User } from "@prisma/client";
 import { Button } from "~/components/ui/button";
+import { TSession } from "~/lib/validation/session";
 import { api } from "~/trpc/react";
 
-interface Session {
-  id: string;
-  userId: string;
-  sessionToken: string;
-  createdAt: Date;
-  lastActivity: Date;
-  ip: string;
-  country: string;
-  deviceType: string;
-  city: string;
-  os: string;
-  browser: string;
-}
-
 interface ActiveUserSessionsProps {
-  currentSession: Session;
+  currentSession: TSession;
 }
-
 const formatDate = (date: Date) => {
   return date.toLocaleString(); // You can adjust this to your desired date format
 };
@@ -127,29 +114,45 @@ export function ActiveDevices({ currentSession }: ActiveUserSessionsProps) {
   };
 
   const sessionList = allSessions?.data || [];
-  const isDesktop = currentSession.deviceType === "Desktop";
+
+  const renderDeviceInformation = (session: any) => {
+    const { deviceInfo } = session;
+
+    if (!deviceInfo || typeof deviceInfo !== "object") {
+      return null;
+    }
+
+    const isDesktop = deviceInfo.deviceType === "Desktop";
+
+    const deviceSVG = isDesktop ? <DesktopSVG /> : <MobileSVG />;
+
+    return (
+      <div className="mt-2  flex items-center gap-16 p-2">
+        {deviceSVG}
+        <div className="">
+          <div className="font-medium">{deviceInfo.os}</div>
+          <div className="text-slate-500">{deviceInfo.browser}</div>
+          <div className="text-slate-500">{deviceInfo.ip}</div>
+          <div className="text-slate-500">
+            {deviceInfo.city}, {deviceInfo.country}
+          </div>
+          <div className="text-slate-500">
+            First Sign In: {formatDate(session.createdAt)}
+          </div>
+          <div className="text-slate-500">
+            Last activity: {formatDate(session.lastActivity)}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       {sessionList.map((session) => (
         <div key={session.id}>
           <div className="mt-2  flex items-center justify-between gap-16 rounded-lg border border-primary p-2">
-            <div className="mt-2  flex items-center gap-16 p-2">
-              {isDesktop ? <DesktopSVG /> : <MobileSVG />}
-              <div className="">
-                <div className="font-medium">{session.os}</div>
-                <div className="text-slate-500">{session.browser}</div>
-                <div className="text-slate-500">{session.ip}</div>
-                <div className="text-slate-500">
-                  {session.city},{session.country}
-                </div>
-                <div className="text-slate-500">
-                  First Sign In: {formatDate(session.createdAt)}
-                </div>
-                <div className="text-slate-500">
-                  Last activity: {formatDate(session.lastActivity)}
-                </div>
-              </div>
-            </div>
+            {renderDeviceInformation(session)}
             {currentSession.sessionToken == session.sessionToken ? (
               <div className="mr-6 rounded-md bg-primary p-2 font-medium text-white">
                 Current Session

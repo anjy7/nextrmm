@@ -41,12 +41,7 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now())
   lastActivity DateTime @default(now())
-  ip           String   @default("")
-  country      String   @default("")
-  deviceType   String   @default("")
-  city         String   @default("")
-  os           String   @default("")
-  browser      String   @default("")
+  deviceInfo   Json?
 }
 
 model User {

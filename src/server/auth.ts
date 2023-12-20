@@ -17,6 +17,7 @@ import { env } from "~/env.mjs";
 import type { Locale } from "~/i18n-config";
 import { getDictionary } from "~/lib/dictionary";
 import { authDataSchema } from "~/lib/validation/auth";
+import { TSession } from "~/lib/validation/session";
 import { db } from "~/server/db";
 
 const resend = new Resend("re_T3T2Nw76_LrnEcTmQxUC3oXfdAJ92WQmM");
@@ -34,7 +35,7 @@ declare module "next-auth" {
       id: string; // ...other properties
       // role: UserRole;
     } & DefaultSession["user"];
-    currentSession: Session;
+    currentSession: TSession;
   }
 
   // interface User {
@@ -77,25 +78,28 @@ export const authOptions: NextAuthOptions = {
 
       let updateSession;
       let currentSession;
-      if (
-        existingSession?.city == "" ||
-        existingSession?.country == "" ||
-        existingSession?.os == "" ||
-        existingSession?.browser == "" ||
-        existingSession?.deviceType == "" ||
-        existingSession?.ip == ""
-      ) {
+      if (existingSession?.deviceInfo == null) {
         if (userIp) {
           let existingUser = await db.session.findMany({
             where: {
               userId: user.id,
             },
           });
-          //checks if user with same Ip address has a session already
+          const json = {
+            ip: userIp,
+            os: os,
+            city: city,
+            country: country,
+            browser: browser,
+            deviceType: deviceType,
+          };
+          //checks if user with same Ip address,city,country,os,device type,browser has a session already
           let userSessionUsingIp = await db.session.findMany({
             where: {
-              ip: userIp,
               userId: user.id,
+              deviceInfo: {
+                equals: json,
+              },
             },
           });
           //if the IP is new i.e no match found for the user session with same IP, send email
@@ -138,12 +142,14 @@ export const authOptions: NextAuthOptions = {
             id: existingSession?.id,
           },
           data: {
-            ip: userIp || "",
-            os: os || "other",
-            country: country,
-            city: city,
-            deviceType: deviceType || "other",
-            browser: browser || "other",
+            deviceInfo: {
+              ip: userIp || "",
+              os: os || "other",
+              country: country,
+              city: city,
+              deviceType: deviceType || "other",
+              browser: browser || "other",
+            },
             lastActivity: new Date(),
           },
         });

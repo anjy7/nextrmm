@@ -102,7 +102,7 @@ export const authOptions: NextAuthOptions = {
               },
             },
           });
-          //if the IP is new i.e no match found for the user session with same IP, send email
+          //if the IP is new i.e no match found for the user session, send email
           if (userSessionUsingIp.length == 0 && existingUser) {
             try {
               const user = await db.user.findUnique({

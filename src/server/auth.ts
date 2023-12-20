@@ -28,26 +28,13 @@ const resend = new Resend("re_T3T2Nw76_LrnEcTmQxUC3oXfdAJ92WQmM");
  * @see https://next-auth.js.org/getting-started/typescript#module-augmentation
  */
 
-interface SessionInterface {
-  id: string;
-  userId: string;
-  sessionToken: string;
-  createdAt: Date;
-  lastActivity: Date;
-  ip: string;
-  country: string;
-  deviceType: string;
-  city: string;
-  os: string;
-  browser: string;
-}
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string; // ...other properties
       // role: UserRole;
     } & DefaultSession["user"];
-    currentSession: SessionInterface;
+    currentSession: Session;
   }
 
   // interface User {
@@ -89,6 +76,7 @@ export const authOptions: NextAuthOptions = {
       });
 
       let updateSession;
+      let currentSession;
       if (
         existingSession?.city == "" ||
         existingSession?.country == "" ||
@@ -98,6 +86,11 @@ export const authOptions: NextAuthOptions = {
         existingSession?.ip == ""
       ) {
         if (userIp) {
+          let existingUser = await db.session.findMany({
+            where: {
+              userId: user.id,
+            },
+          });
           //checks if user with same Ip address has a session already
           let userSessionUsingIp = await db.session.findMany({
             where: {
@@ -106,7 +99,7 @@ export const authOptions: NextAuthOptions = {
             },
           });
           //if the IP is new i.e no match found for the user session with same IP, send email
-          if (userSessionUsingIp.length == 0) {
+          if (userSessionUsingIp.length == 0 && existingUser) {
             try {
               const user = await db.user.findUnique({
                 where: {
@@ -154,18 +147,32 @@ export const authOptions: NextAuthOptions = {
             lastActivity: new Date(),
           },
         });
+        currentSession = updateSession;
       } else {
-        updateSession = await db.session.update({
-          where: {
-            id: existingSession?.id,
-          },
-          data: {
-            lastActivity: new Date(),
-          },
-        });
-      }
+        const threshold = 2 * 60 * 1000; // Threshold: 2 minutes (adjusted as needed)
+        let lastUpdateTimestamp = existingSession?.lastActivity;
+        const currentTime = new Date().getTime();
+        let canUpdateNow = false;
 
-      let currentSession = updateSession;
+        if (lastUpdateTimestamp) {
+          const lastUpdate = lastUpdateTimestamp.getTime();
+          canUpdateNow = currentTime - lastUpdate >= threshold;
+        }
+
+        if (canUpdateNow) {
+          updateSession = await db.session.update({
+            where: {
+              id: existingSession?.id,
+            },
+            data: {
+              lastActivity: new Date(),
+            },
+          });
+          currentSession = updateSession;
+        } else {
+          currentSession = existingSession;
+        }
+      }
 
       return {
         ...session,

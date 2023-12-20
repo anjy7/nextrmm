@@ -11,6 +11,7 @@ export const sessionRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return await ctx.db.session.findMany({
         where: input,
+        orderBy: { lastActivity: "desc" },
       });
     }),
   deleteBySessionToken: protectedProcedure

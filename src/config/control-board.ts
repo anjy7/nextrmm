@@ -28,7 +28,7 @@ export const controlboardConfig: ControlBoardConfig = {
       icon: "help",
     },
     {
-      title: "Account Settings",
+      title: "Settings",
       href: "/settings",
       icon: "settings",
     },

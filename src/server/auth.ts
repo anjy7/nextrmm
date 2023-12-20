@@ -94,7 +94,7 @@ export const authOptions: NextAuthOptions = {
             deviceType: deviceType,
           };
           //checks if user with same Ip address,city,country,os,device type,browser has a session already
-          let userSessionUsingIp = await db.session.findMany({
+          let userSessionUsingDeviceInfo = await db.session.findMany({
             where: {
               userId: user.id,
               deviceInfo: {
@@ -103,7 +103,7 @@ export const authOptions: NextAuthOptions = {
             },
           });
           //if the IP is new i.e no match found for the user session, send email
-          if (userSessionUsingIp.length == 0 && existingUser) {
+          if (userSessionUsingDeviceInfo.length == 0 && existingUser) {
             try {
               const user = await db.user.findUnique({
                 where: {

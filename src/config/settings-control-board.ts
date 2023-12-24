@@ -7,8 +7,8 @@ export const settingscontrolboardConfig: SettingsControlBoardConfig = {
       href: "/settings/general",
     },
     {
-      title: "Account Activity",
-      href: "/settings/account-activity",
+      title: "Sessions",
+      href: "/settings/sessions",
     },
   ],
 };

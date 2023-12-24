@@ -149,9 +149,12 @@ export function ActiveDevices({ currentSession }: ActiveUserSessionsProps) {
 
   return (
     <>
-      {sessionList.map((session) => (
-        <div key={session.id}>
-          <div className="mt-2  flex items-center justify-between gap-16 rounded-lg border border-primary p-2">
+      {sessionList.map((session, index) => (
+        <div
+          key={session.id}
+          className={index === sessionList.length - 1 ? "" : "border-b"}
+        >
+          <div className="flex h-full w-full  items-center justify-between p-2  ">
             {renderDeviceInformation(session)}
             {currentSession.sessionToken == session.sessionToken ? (
               <div className="mr-6 rounded-md bg-primary p-2 font-medium text-white">
